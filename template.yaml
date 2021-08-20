@@ -1,6 +1,19 @@
 AWSTemplateFormatVersion: 2010-09-09
 Transform: AWS::Serverless-2016-10-31
 
+Metadata:
+  AWS::ServerlessRepo::Application:
+    Name: serverless-survey-external-config
+    Description: Serverless survey with Python 3.8 runtime and external config file sourced from Amazon S3 bucket. This is a fork of https://serverlessrepo.aws.amazon.com/applications/us-east-1/194383749778/serverless-survey.
+    Author: Vinod Shukla
+    SpdxLicenseId: Apache-2.0
+    LicenseUrl: LICENSE.txt
+    ReadmeUrl: README.md
+    Labels: ['lambda', 'survey', 'serverless', 'html', 'dynamodb']
+    HomePageUrl: https://github.com/vsnyc/serverless-survey
+    SemanticVersion: 0.0.1
+    SourceCodeUrl: https://github.com/vsnyc/serverless-survey
+
 Parameters:
   ConfigFileLocation:
     Description: Provide the S3 location of the survey configuration file.

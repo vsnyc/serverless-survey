@@ -1,5 +1,23 @@
 AWSTemplateFormatVersion: 2010-09-09
 Transform: AWS::Serverless-2016-10-31
+Metadata:
+  AWS::ServerlessRepo::Application:
+    Name: serverless-survey-external-config
+    Description: Serverless survey with Python 3.8 runtime and external config file
+      sourced from Amazon S3 bucket. This is a fork of https://serverlessrepo.aws.amazon.com/applications/us-east-1/194383749778/serverless-survey.
+    Author: Vinod Shukla
+    SpdxLicenseId: Apache-2.0
+    LicenseUrl: s3://aws-cfn-samples/serverless-survey/fa818a259cbed7ce8bc2a22d35a464fc
+    ReadmeUrl: s3://aws-cfn-samples/serverless-survey/bab3d9580ac4bec6438b3055a1343823
+    Labels:
+    - lambda
+    - survey
+    - serverless
+    - html
+    - dynamodb
+    HomePageUrl: https://github.com/vsnyc/serverless-survey
+    SemanticVersion: '0.0.1'
+    SourceCodeUrl: https://github.com/vsnyc/serverless-survey
 Parameters:
   ConfigFileLocation:
     Description: Provide the S3 location of the survey configuration file. For example,
@@ -44,7 +62,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       Handler: survey.lambda_handler
-      CodeUri: s3://aws-cfn-samples/serverless-survey/350984379ca93ef16ee500cdf7aa7c2b
+      CodeUri: s3://aws-cfn-samples/serverless-survey/4b01cf5067c5cebdd83b6c72f00f2343
       Runtime: python3.8
       Role:
         Fn::GetAtt:
@@ -64,7 +82,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       Handler: survey_submit.lambda_handler
-      CodeUri: s3://aws-cfn-samples/serverless-survey/350984379ca93ef16ee500cdf7aa7c2b
+      CodeUri: s3://aws-cfn-samples/serverless-survey/4b01cf5067c5cebdd83b6c72f00f2343
       Runtime: python3.8
       Policies:
       - DynamoDBCrudPolicy:
