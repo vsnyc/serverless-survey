@@ -1,43 +1,13 @@
 AWSTemplateFormatVersion: 2010-09-09
-Outputs:
-  SurveyURL:
-    Description: Link to your Serverless Survey
-    Value:
-      Fn::Sub: https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/newsurvey
+Transform: AWS::Serverless-2016-10-31
+Parameters:
+  ConfigFileLocation:
+    Description: Provide the S3 location of the survey configuration file. For example,
+      if the location is "s3://my-config-bucket/config.yaml,"" enter "my-config-bucket/config.yaml.""
+    Type: String
 Resources:
-  Survey:
-    Properties:
-      CodeUri: s3://tomash-serverless-survey/8e8e60ba268b89fabec9e4ef2bfce05e
-      Events:
-        RestAPI:
-          Properties:
-            Method: ANY
-            Path: /newsurvey
-          Type: Api
-      Handler: survey.lambda_handler
-      Runtime: python2.7
-    Type: AWS::Serverless::Function
-  SurveySubmit:
-    Properties:
-      CodeUri: s3://tomash-serverless-survey/8e8e60ba268b89fabec9e4ef2bfce05e
-      Environment:
-        Variables:
-          TABLE_NAME:
-            Ref: SurveyTable
-      Events:
-        RestAPI:
-          Properties:
-            Method: ANY
-            Path: /submitsurvey
-          Type: Api
-      Handler: survey_submit.lambda_handler
-      Policies:
-      - DynamoDBCrudPolicy:
-          TableName:
-            Ref: SurveyTable
-      Runtime: python2.7
-    Type: AWS::Serverless::Function
   SurveyTable:
+    Type: AWS::Serverless::SimpleTable
     Properties:
       PrimaryKey:
         Name: id
@@ -45,5 +15,73 @@ Resources:
       ProvisionedThroughput:
         ReadCapacityUnits: 5
         WriteCapacityUnits: 5
-    Type: AWS::Serverless::SimpleTable
-Transform: AWS::Serverless-2016-10-31
+  SurveyRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Path: /
+      Policies:
+      - PolicyDocument:
+          Version: 2012-10-17
+          Statement:
+          - Action:
+            - s3:GetObject
+            Resource:
+              Fn::Sub: arn:aws:s3:::${ConfigFileLocation}
+            Effect: Allow
+        PolicyName: config-file-s3-access
+      ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+  Survey:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: survey.lambda_handler
+      CodeUri: s3://aws-cfn-samples/serverless-survey/350984379ca93ef16ee500cdf7aa7c2b
+      Runtime: python3.8
+      Role:
+        Fn::GetAtt:
+        - SurveyRole
+        - Arn
+      Events:
+        RestAPI:
+          Type: Api
+          Properties:
+            Path: /newsurvey
+            Method: ANY
+      Environment:
+        Variables:
+          ConfigFileLocation:
+            Ref: ConfigFileLocation
+  SurveySubmit:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: survey_submit.lambda_handler
+      CodeUri: s3://aws-cfn-samples/serverless-survey/350984379ca93ef16ee500cdf7aa7c2b
+      Runtime: python3.8
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName:
+            Ref: SurveyTable
+      Events:
+        RestAPI:
+          Type: Api
+          Properties:
+            Path: /submitsurvey
+            Method: ANY
+      Environment:
+        Variables:
+          TABLE_NAME:
+            Ref: SurveyTable
+Outputs:
+  SurveyURL:
+    Description: Link to your Serverless Survey
+    Value:
+      Fn::Sub: https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/newsurvey

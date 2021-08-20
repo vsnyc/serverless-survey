@@ -1,10 +1,30 @@
-import yaml
+import ruamel.yaml
 import sys
+import os
 from yattag import Doc
+import boto3
+import urllib.request
+from urllib.parse import urlparse
+
+def getTemplateText(file_url):
+    try:
+        s3 = boto3.resource('s3')
+        file_s3_uri = f"s3://{file_url}"
+        s3_parse = urlparse(file_s3_uri)
+        bucket = s3_parse.netloc
+        s3_key = s3_parse.path.lstrip('/')
+        s3_obj = s3.Object(bucket, s3_key)
+        template_raw_data = s3_obj.get()["Body"].read().decode('utf-8')
+        return template_raw_data.strip()
+    except:
+        return "ERROR"
+
 
 def lambda_handler(event, context):
-
-    configuration = yaml.load(open("config.yaml").read())
+    config_file = os.environ.get('ConfigFileLocation')
+    config_file_text = getTemplateText(config_file)
+    configuration = ruamel.yaml.safe_load(config_file_text)
+    print(configuration)
     questions = configuration['Questions'];
     title = configuration['Title'];
     author = configuration['Author'];
@@ -92,3 +112,9 @@ def lambda_handler(event, context):
                 'Content-Type': 'text/html',
             }
         }
+
+
+if __name__ == '__main__':
+    print(sys.argv[1])
+    os.environ['ConfigFileLocation'] = sys.argv[1]
+    lambda_handler(None, None)

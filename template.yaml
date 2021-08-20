@@ -1,13 +1,11 @@
 AWSTemplateFormatVersion: 2010-09-09
 Transform: AWS::Serverless-2016-10-31
 
-
-Outputs:
-
-  SurveyURL:
-    Description: "Link to your Serverless Survey"
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/newsurvey"
-
+Parameters:
+  ConfigFileLocation:
+    Description: Provide the S3 location of the survey configuration file.
+      For example, if the location is "s3://my-config-bucket/config.yaml,"" enter "my-config-bucket/config.yaml.""
+    Type: String
 
 Resources:
 
@@ -21,25 +19,53 @@ Resources:
          ReadCapacityUnits: 5
          WriteCapacityUnits: 5
 
+  SurveyRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: "/"
+      Policies:
+        - PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Action:
+                  - s3:GetObject
+                Resource: !Sub "arn:aws:s3:::${ConfigFileLocation}"
+                Effect: Allow
+          PolicyName: config-file-s3-access
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
+
   Survey:
     Type: AWS::Serverless::Function
     Properties:
       Handler: survey.lambda_handler
       CodeUri: .
-      Runtime: python2.7
+      Runtime: python3.8
+      Role: !GetAtt 'SurveyRole.Arn'
       Events:
         RestAPI:
           Type: Api
           Properties:
             Path: /newsurvey
             Method: ANY
-
+      Environment:
+        Variables:
+          ConfigFileLocation: !Ref ConfigFileLocation
   SurveySubmit:
     Type: AWS::Serverless::Function
     Properties:
       Handler: survey_submit.lambda_handler
       CodeUri: .
-      Runtime: python2.7
+      Runtime: python3.8
       Policies:
         - DynamoDBCrudPolicy:
              TableName: !Ref SurveyTable
@@ -52,3 +78,9 @@ Resources:
       Environment:
         Variables:
           TABLE_NAME: !Ref SurveyTable
+
+Outputs:
+
+  SurveyURL:
+    Description: "Link to your Serverless Survey"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/newsurvey"
