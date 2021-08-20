@@ -1,4 +1,27 @@
 # serverless-survey
+This is a fork of https://github.com/tstachlewski/serverless-survey.
+Enhancements in this fork:
+1. Changed dependency from PyYAML to Ruamel to work with python3.8.
+2. The config.yaml is now externalized and sourced from S3, so you don't have to modify the application to update your survey.
+3. Updated instructions to run it using [taskcat](https://aws-quickstart.github.io/taskcat/)
+4. Old yaml and yattag packages have been removed and replaced with `sam` instructions.
+
+## SAM build, package, and deploy
+1. Ensure that you have [SAM CLI](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-cli-install.html) installed.
+2. To build the package, from the project root:
+   
+   `sam build`
+3. To package:
+   
+   `sam package --s3-bucket aws-cfn-samples --s3-prefix serverless-survey --output-template-file packaged.yaml`
+4. Test using taskcat (`-n` will keep the stack running after the test succeeds)
+   
+   `taskcat test run -l -n`
+5. Deploy using SAM
+   
+   `sam deploy --template-file packaged.yaml --stack-name <YOUR STACK NAME>` 
+   
+# Upstream README follows
 
 Thanks to this application, you will be to quickly generate your own serverless survey. Just fill out configuration file with questions which should be part of the survey and save your app. In just a few seconds, your survey will be available and you will be able to review results in DynamoDB table.
 
